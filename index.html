@@ -24,7 +24,7 @@
             flex-direction: column;
             align-items: center;
             margin: 0;
-            padding: 40px 20px;
+            padding: 20px 10px;
             min-height: 100vh;
             box-sizing: border-box;
         }
@@ -34,6 +34,7 @@
             font-weight: 800;
             letter-spacing: 2px;
             margin-bottom: 5px;
+            text-align: center;
             background: linear-gradient(to right, #ff477e, #ff7676, #9b51e0);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -45,6 +46,7 @@
             font-size: 0.95rem;
             margin-bottom: 35px;
             letter-spacing: 1px;
+            text-align: center;
         }
 
         .container {
@@ -52,13 +54,15 @@
             border: 1px solid var(--panel-border);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            padding: 30px;
+            padding: 25px;
             border-radius: 24px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 860px;
+            width: 100%;
+            max-width: 860px;
+            box-sizing: border-box;
         }
 
         .room-controls {
@@ -79,6 +83,8 @@
             font-size: 1rem;
             outline: none;
             transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         input[type="text"]:focus {
@@ -101,6 +107,7 @@
             background: linear-gradient(135deg, #ff477e 0%, #ff6b8b 100%);
             color: white;
             box-shadow: var(--glow);
+            white-space: nowrap;
         }
 
         #join-btn:hover {
@@ -112,7 +119,8 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            width: 800px;
+            width: 100%;
+            max-width: 800px;
             height: 320px;
             background: rgba(0,0,0,0.4);
             border: 1px solid var(--panel-border);
@@ -163,20 +171,27 @@
 
         .filter-toolbar {
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
             margin-top: 20px;
             background: rgba(0,0,0,0.2);
             padding: 8px;
             border-radius: 12px;
             border: 1px solid var(--panel-border);
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .filter-btn {
             background: transparent;
             color: #a0aec0;
-            padding: 8px 16px;
+            padding: 8px 14px;
             font-size: 0.8rem;
             border-radius: 8px;
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
         }
 
         .filter-btn.active {
@@ -189,7 +204,7 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 100px;
+            font-size: 80px;
             font-weight: 900;
             color: #fff;
             text-shadow: 0 0 30px rgba(255,71,126,0.8), 0 4px 20px rgba(0,0,0,0.6);
@@ -226,6 +241,7 @@
             margin-top: 40px;
             display: none;
             text-align: center;
+            width: 100%;
             animation: fadeIn 0.6s ease;
         }
 
@@ -248,6 +264,17 @@
             max-width: 100%;
             height: auto;
             border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 600px) {
+            .split-booth {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+                height: 440px;
+            }
+            h1 { font-size: 1.6rem; }
+            .room-controls { flex-direction: column; }
+            #join-btn { width: 100%; }
         }
 
         @keyframes fadeIn {
@@ -367,7 +394,6 @@
             try {
                 if (typeof SimplePeer === 'undefined') return;
                 
-                // Bulletproof TURN Server Configuration
                 peer = new SimplePeer({
                     initiator: initiator,
                     trickle: false,
