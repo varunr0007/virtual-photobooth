@@ -108,7 +108,6 @@
             opacity: 0.95;
         }
 
-        /* Upgraded Aesthetic Dual Frame */
         .split-booth {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -143,7 +142,6 @@
 
         .local-video { transform: scaleX(-1); }
 
-        /* Real-time Filter Overlays CSS */
         .filter-normal { filter: none; }
         .filter-vintage { filter: sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.1); }
         .filter-cyber { filter: hue-rotate(45deg) saturate(1.4) contrast(1.1); }
@@ -163,7 +161,6 @@
             color: rgba(255,255,255,0.85);
         }
 
-        /* Aesthetic Filter Toolbar */
         .filter-toolbar {
             display: flex;
             gap: 10px;
@@ -225,12 +222,24 @@
             box-shadow: 0 12px 24px rgba(155, 81, 224, 0.4);
         }
 
-        /* Minimalist Shared Photostrip Display */
         #strip-output {
             margin-top: 40px;
             display: none;
             text-align: center;
             animation: fadeIn 0.6s ease;
+        }
+
+        #download-btn {
+            display: none;
+            margin: 20px auto;
+            background: #ff477e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 71, 126, 0.3);
         }
 
         canvas {
@@ -283,7 +292,8 @@
     <div id="strip-output">
         <h2 style="font-size: 1.4rem; margin-bottom: 20px; color: #e2e8f0;">✨ Your Memory Strip ✨</h2>
         <canvas id="finalCanvas"></canvas>
-        <p style="color: #a0aec0; font-size: 0.85rem; margin-top: 15px;">Right-click or long-press the strip to save it forever</p>
+        <button id="download-btn">📥 Download Photo Strip</button>
+        <p style="color: #a0aec0; font-size: 0.85rem; margin-top: 15px;">Photos are private and stay in your browser</p>
     </div>
 
     <script>
@@ -301,6 +311,7 @@
         const joinBtn = document.getElementById('join-btn');
         const canvas = document.getElementById('finalCanvas');
         const ctx = canvas.getContext('2d');
+        const downloadBtn = document.getElementById('download-btn');
 
         async function setupCamera() {
             try {
@@ -314,27 +325,19 @@
 
         function changeFilter(filterType, element) {
             currentFilter = filterType;
-            
-            // Apply live preview classes
             localVideo.className = `local-video filter-${filterType}`;
             remoteVideo.className = `filter-${filterType}`;
-            
-            // Sync active filter choice button style
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
-            
-            // Broadcast the filter change to your partner instantly!
             if(roomId) {
                 socket.emit('filter-change', { room: roomId, filter: filterType });
             }
         }
 
-        // Listen for filter changes made by your partner
         socket.on('update-filter', (filterType) => {
             currentFilter = filterType;
             localVideo.className = `local-video filter-${filterType}`;
             remoteVideo.className = `filter-${filterType}`;
-            
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 if(btn.innerText.toLowerCase().includes(filterType.substring(0,3))) {
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -346,11 +349,9 @@
         function connectToRoom() {
             roomId = document.getElementById('room-input').value;
             if(!roomId) return alert("Please enter a room name!");
-            
             socket.emit('join-room', roomId);
             joinBtn.innerText = "Connected ✓";
             joinBtn.style.background = "linear-gradient(135deg, #2ed573 0%, #1abc9c 100%)";
-            joinBtn.style.boxShadow = "0 0 20px rgba(46, 213, 115, 0.3)";
         }
 
         socket.on('peer-joined', (peerId) => {
@@ -366,10 +367,26 @@
             try {
                 if (typeof SimplePeer === 'undefined') return;
                 
+                // Bulletproof TURN Server Configuration
                 peer = new SimplePeer({
                     initiator: initiator,
                     trickle: false,
-                    stream: localStream
+                    stream: localStream,
+                    config: {
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' }, 
+                            {
+                                urls: 'turn:global.relay.metered.ca:80',
+                                username: '15c013330465beb992824e1d', 
+                                credential: 'QfeD7i9mmg060Fr3' 
+                            },
+                            {
+                                urls: 'turn:global.relay.metered.ca:443?transport=tcp',
+                                username: '15c013330465beb992824e1d', 
+                                credential: 'QfeD7i9mmg060Fr3' 
+                            }
+                        ]
+                    }
                 });
 
                 peer.on('signal', (signal) => {
@@ -392,7 +409,6 @@
         socket.on('start-countdown', async () => {
             actionBtn.disabled = true;
             capturedFrames = [];
-            
             for (let i = 0; i < 4; i++) {
                 for (let count = 3; count > 0; count--) {
                     countdownEl.innerText = count;
@@ -413,41 +429,23 @@
             snapCanvas.height = 320;
             const sCtx = snapCanvas.getContext('2d');
 
-            // Apply filter natively to the canvas render layer
-            if (currentFilter === 'vintage') {
-                sCtx.filter = 'sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.1)';
-            } else if (currentFilter === 'cyber') {
-                sCtx.filter = 'hue-rotate(45deg) saturate(1.4) contrast(1.1)';
-            } else if (currentFilter === 'noir') {
-                sCtx.filter = 'grayscale(1) contrast(1.25) brightness(0.9)';
-            }
+            if (currentFilter === 'vintage') sCtx.filter = 'sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.1)';
+            else if (currentFilter === 'cyber') sCtx.filter = 'hue-rotate(45deg) saturate(1.4) contrast(1.1)';
+            else if (currentFilter === 'noir') sCtx.filter = 'grayscale(1) contrast(1.25) brightness(0.9)';
 
-            // Draw local camera mirrored
             sCtx.save();
             sCtx.translate(400, 0);
             sCtx.scale(-1, 1);
             sCtx.drawImage(localVideo, -400, 0, 400, 320);
             sCtx.restore();
-
-            // Draw remote camera
-            try {
-                sCtx.drawImage(remoteVideo, 400, 0, 400, 320);
-            } catch(e) {
-                console.error(e);
-            }
-
+            try { sCtx.drawImage(remoteVideo, 400, 0, 400, 320); } catch(e) {}
             capturedFrames.push(snapCanvas.toDataURL('image/png'));
         }
 
         function buildLongDistanceStrip() {
-            const w = 800;
-            const h = 320;
-            const padding = 24;
-
+            const w = 800; const h = 320; const padding = 24;
             canvas.width = w + (padding * 2);
-            canvas.height = (h * 4) + (padding * 5) + 40; // bottom border margin
-
-            // High-end clean white photostrip background
+            canvas.height = (h * 4) + (padding * 5) + 40;
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -460,7 +458,15 @@
                     rendered++;
                     if (rendered === 4) {
                         document.getElementById('strip-output').style.display = 'block';
+                        downloadBtn.style.display = 'block';
                         document.getElementById('strip-output').scrollIntoView({ behavior: 'smooth' });
+                        
+                        downloadBtn.onclick = () => {
+                            const link = document.createElement('a');
+                            link.download = 'date-night-memory.jpg';
+                            link.href = canvas.toDataURL('image/jpeg', 0.9);
+                            link.click();
+                        };
                     }
                 };
             });
