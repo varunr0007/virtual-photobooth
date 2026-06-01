@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Long-Distance Virtual Date Booth</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f0c20 0%, #15102a 50%, #24142c 100%);
+            --panel-bg: rgba(255, 255, 255, 0.04);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --accent-pink: #ff477e;
+            --accent-purple: #9b51e0;
+            --glow: 0 0 20px rgba(255, 71, 126, 0.4);
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            background: linear-gradient(to right, #ff477e, #ff7676, #9b51e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            color: #a0aec0;
+            font-size: 0.95rem;
+            margin-bottom: 35px;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 860px;
+        }
+
+        .room-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--panel-border);
+            padding: 14px 20px;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 10px rgba(255, 71, 126, 0.2);
+        }
+
+        button {
+            font-weight: 700;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        #join-btn {
+            background: linear-gradient(135deg, #ff477e 0%, #ff6b8b 100%);
+            color: white;
+            box-shadow: var(--glow);
+        }
+
+        #join-btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.95;
+        }
+
+        /* Upgraded Aesthetic Dual Frame */
+        .split-booth {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            width: 800px;
+            height: 320px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #0b0914;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: filter 0.4s ease;
+        }
+
+        .local-video { transform: scaleX(-1); }
+
+        /* Real-time Filter Overlays CSS */
+        .filter-normal { filter: none; }
+        .filter-vintage { filter: sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.1); }
+        .filter-cyber { filter: hue-rotate(45deg) saturate(1.4) contrast(1.1); }
+        .filter-noir { filter: grayscale(1) contrast(1.25) brightness(0.9); }
+
+        .tag {
+            position: absolute;
+            bottom: 12px; left: 12px;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.85);
+        }
+
+        /* Aesthetic Filter Toolbar */
+        .filter-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .filter-btn {
+            background: transparent;
+            color: #a0aec0;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            border-radius: 8px;
+        }
+
+        .filter-btn.active {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .countdown {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255,71,126,0.8), 0 4px 20px rgba(0,0,0,0.6);
+            z-index: 10;
+            pointer-events: none;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #action-btn {
+            background: linear-gradient(135deg, #9b51e0 0%, #7033b0 100%);
+            color: white;
+            margin-top: 25px;
+            padding: 16px 40px;
+            font-size: 1rem;
+            box-shadow: 0 8px 20px rgba(155, 81, 224, 0.3);
+            width: 100%;
+            max-width: 300px;
+        }
+
+        #action-btn:disabled {
+            background: #2a2635;
+            color: #5a5568;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #action-btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(155, 81, 224, 0.4);
+        }
+
+        /* Minimalist Shared Photostrip Display */
+        #strip-output {
+            margin-top: 40px;
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.6s ease;
+        }
+
+        canvas {
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            max-width: 100%;
+            height: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>VIRTUAL PHOTOBOOTH</h1>
+    <div class="subtitle">LONG-DISTANCE DATE NIGHT</div>
+
+    <div class="container">
+        <div class="room-controls">
+            <input type="text" id="room-input" placeholder="Enter Room ID" value="date-night">
+            <button id="join-btn" onclick="connectToRoom()">Join Room</button>
+        </div>
+
+        <div class="split-booth">
+            <div class="video-container">
+                <video id="localVideo" class="local-video filter-normal" autoplay playsinline muted></video>
+                <div class="tag">YOU</div>
+            </div>
+            <div class="video-container">
+                <video id="remoteVideo" class="filter-normal" autoplay playsinline></video>
+                <div class="tag">PARTNER</div>
+            </div>
+            <div id="countdown" class="countdown"></div>
+        </div>
+
+        <div class="filter-toolbar">
+            <button class="filter-btn active" onclick="changeFilter('normal', this)">Normal</button>
+            <button class="filter-btn" onclick="changeFilter('vintage', this)">Retro Warm</button>
+            <button class="filter-btn" onclick="changeFilter('cyber', this)">Cyber Neon</button>
+            <button class="filter-btn" onclick="changeFilter('noir', this)">B&W Noir</button>
+        </div>
+
+        <button id="action-btn" onclick="syncTrigger()" disabled>SNAP TOGETHER</button>
+    </div>
+
+    <div id="strip-output">
+        <h2 style="font-size: 1.4rem; margin-bottom: 20px; color: #e2e8f0;">✨ Your Memory Strip ✨</h2>
+        <canvas id="finalCanvas"></canvas>
+        <p style="color: #a0aec0; font-size: 0.85rem; margin-top: 15px;">Right-click or long-press the strip to save it forever</p>
+    </div>
+
+    <script>
+        const socket = io();
+        let localStream;
+        let peer = null;
+        let roomId;
+        let capturedFrames = [];
+        let currentFilter = 'normal';
+
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const countdownEl = document.getElementById('countdown');
+        const actionBtn = document.getElementById('action-btn');
+        const joinBtn = document.getElementById('join-btn');
+        const canvas = document.getElementById('finalCanvas');
+        const ctx = canvas.getContext('2d');
+
+        async function setupCamera() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                localVideo.srcObject = localStream;
+            } catch(e) {
+                console.error("Camera access error:", e);
+                alert("Webcam not detected. Please verify permissions!");
+            }
+        }
+
+        function changeFilter(filterType, element) {
+            currentFilter = filterType;
+            
+            // Apply live preview classes
+            localVideo.className = `local-video filter-${filterType}`;
+            remoteVideo.className = `filter-${filterType}`;
+            
+            // Sync active filter choice button style
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            
+            // Broadcast the filter change to your partner instantly!
+            if(roomId) {
+                socket.emit('filter-change', { room: roomId, filter: filterType });
+            }
+        }
+
+        // Listen for filter changes made by your partner
+        socket.on('update-filter', (filterType) => {
+            currentFilter = filterType;
+            localVideo.className = `local-video filter-${filterType}`;
+            remoteVideo.className = `filter-${filterType}`;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if(btn.innerText.toLowerCase().includes(filterType.substring(0,3))) {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
+            });
+        });
+
+        function connectToRoom() {
+            roomId = document.getElementById('room-input').value;
+            if(!roomId) return alert("Please enter a room name!");
+            
+            socket.emit('join-room', roomId);
+            joinBtn.innerText = "Connected ✓";
+            joinBtn.style.background = "linear-gradient(135deg, #2ed573 0%, #1abc9c 100%)";
+            joinBtn.style.boxShadow = "0 0 20px rgba(46, 213, 115, 0.3)";
+        }
+
+        socket.on('peer-joined', (peerId) => {
+            initPeer(peerId, true);
+        });
+
+        socket.on('signal', (data) => {
+            if (!peer) initPeer(data.from, false);
+            peer.signal(data.signal);
+        });
+
+        function initPeer(peerId, initiator) {
+            try {
+                if (typeof SimplePeer === 'undefined') return;
+                
+                peer = new SimplePeer({
+                    initiator: initiator,
+                    trickle: false,
+                    stream: localStream
+                });
+
+                peer.on('signal', (signal) => {
+                    socket.emit('signal', { to: peerId, signal: signal });
+                });
+
+                peer.on('stream', (stream) => {
+                    remoteVideo.srcObject = stream;
+                    actionBtn.disabled = false;
+                });
+            } catch(err) {
+                console.error(err);
+            }
+        }
+
+        function syncTrigger() {
+            socket.emit('trigger-booth', roomId);
+        }
+
+        socket.on('start-countdown', async () => {
+            actionBtn.disabled = true;
+            capturedFrames = [];
+            
+            for (let i = 0; i < 4; i++) {
+                for (let count = 3; count > 0; count--) {
+                    countdownEl.innerText = count;
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+                countdownEl.innerText = "📸";
+                captureSharedFrame();
+                await new Promise(r => setTimeout(r, 800));
+                countdownEl.innerText = "";
+            }
+            buildLongDistanceStrip();
+            actionBtn.disabled = false;
+        });
+
+        function captureSharedFrame() {
+            const snapCanvas = document.createElement('canvas');
+            snapCanvas.width = 800;
+            snapCanvas.height = 320;
+            const sCtx = snapCanvas.getContext('2d');
+
+            // Apply filter natively to the canvas render layer
+            if (currentFilter === 'vintage') {
+                sCtx.filter = 'sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.1)';
+            } else if (currentFilter === 'cyber') {
+                sCtx.filter = 'hue-rotate(45deg) saturate(1.4) contrast(1.1)';
+            } else if (currentFilter === 'noir') {
+                sCtx.filter = 'grayscale(1) contrast(1.25) brightness(0.9)';
+            }
+
+            // Draw local camera mirrored
+            sCtx.save();
+            sCtx.translate(400, 0);
+            sCtx.scale(-1, 1);
+            sCtx.drawImage(localVideo, -400, 0, 400, 320);
+            sCtx.restore();
+
+            // Draw remote camera
+            try {
+                sCtx.drawImage(remoteVideo, 400, 0, 400, 320);
+            } catch(e) {
+                console.error(e);
+            }
+
+            capturedFrames.push(snapCanvas.toDataURL('image/png'));
+        }
+
+        function buildLongDistanceStrip() {
+            const w = 800;
+            const h = 320;
+            const padding = 24;
+
+            canvas.width = w + (padding * 2);
+            canvas.height = (h * 4) + (padding * 5) + 40; // bottom border margin
+
+            // High-end clean white photostrip background
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let rendered = 0;
+            capturedFrames.forEach((src, idx) => {
+                const img = new Image();
+                img.src = src;
+                img.onload = () => {
+                    ctx.drawImage(img, padding, padding + (idx * (h + padding)), w, h);
+                    rendered++;
+                    if (rendered === 4) {
+                        document.getElementById('strip-output').style.display = 'block';
+                        document.getElementById('strip-output').scrollIntoView({ behavior: 'smooth' });
+                    }
+                };
+            });
+        }
+
+        setupCamera();
+    </script>
+</body>
+</html>
