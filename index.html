@@ -138,10 +138,13 @@
 
         .local-video { transform: scaleX(-1); }
 
+        /* 🎨 Filter Classes */
         .filter-normal { filter: none; }
         .filter-vintage { filter: sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.1); }
         .filter-cyber { filter: hue-rotate(45deg) saturate(1.4) contrast(1.1); }
         .filter-noir { filter: grayscale(1) contrast(1.25) brightness(0.9); }
+        .filter-90s { filter: contrast(1.2) brightness(1.05) saturate(0.85) sepia(0.15); }
+        .filter-sunset { filter: saturate(1.6) hue-rotate(-10deg) contrast(1.15); }
 
         .filter-toolbar {
             display: flex;
@@ -211,7 +214,6 @@
             height: auto;
         }
 
-        /* 📱 Mobile Layout Overrides */
         @media (max-width: 600px) {
             .split-booth {
                 grid-template-columns: 1fr;
@@ -248,6 +250,8 @@
             <button class="filter-btn" onclick="changeFilter('vintage', this)">Retro Warm</button>
             <button class="filter-btn" onclick="changeFilter('cyber', this)">Cyber Neon</button>
             <button class="filter-btn" onclick="changeFilter('noir', this)">B&W Noir</button>
+            <button class="filter-btn" onclick="changeFilter('90s', this)">90s Flash</button>
+            <button class="filter-btn" onclick="changeFilter('sunset', this)">Vibrant Sunset</button>
         </div>
 
         <button id="action-btn" onclick="syncTrigger()" disabled>SNAP TOGETHER</button>
@@ -288,6 +292,12 @@
             currentFilter = filterType;
             localVideo.className = `local-video filter-${filterType}`;
             remoteVideo.className = `filter-${filterType}`;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('onclick').includes(`'${filterType}'`)) {
+                    btn.classList.add('active');
+                }
+            });
         });
 
         function connectToRoom() {
@@ -343,14 +353,16 @@
 
         function captureFrame() {
             const snap = document.createElement('canvas');
-            // Force horizontal side-by-side dimensions universally
             snap.width = 800;
             snap.height = 320;
             const sCtx = snap.getContext('2d');
 
+            // Apply filter rules to structural final snapshot canvas
             if (currentFilter === 'vintage') sCtx.filter = 'sepia(0.5) contrast(1.1)';
             else if (currentFilter === 'cyber') sCtx.filter = 'hue-rotate(45deg) saturate(1.2)';
             else if (currentFilter === 'noir') sCtx.filter = 'grayscale(1) contrast(1.2)';
+            else if (currentFilter === '90s') sCtx.filter = 'contrast(1.2) brightness(1.05) saturate(0.85) sepia(0.15)';
+            else if (currentFilter === 'sunset') sCtx.filter = 'saturate(1.6) hue-rotate(-10deg) contrast(1.15)';
 
             // Left side: You (Mirrored)
             sCtx.save();
@@ -363,7 +375,6 @@
             if (remoteVideo.srcObject) {
                 sCtx.drawImage(remoteVideo, 400, 0, 400, 320);
             } else {
-                // Temporary mockup block if partner disconnects mid-snap
                 sCtx.fillStyle = '#15102a';
                 sCtx.fillRect(400, 0, 400, 320);
             }
@@ -371,14 +382,11 @@
         }
 
         function buildStrip() {
-            const w = 800;
-            const h = 320;
-            const p = 24; // Padding border size
+            const w = 800; const h = 320; const p = 24;
             
             canvas.width = w + (p * 2);
             canvas.height = (h * 4) + (p * 5);
             
-            // Premium glossy dark background choice
             ctx.fillStyle = "#09070f";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
