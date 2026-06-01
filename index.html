@@ -256,7 +256,7 @@
     <div id="strip-output">
         <h2 style="color: #e2e8f0;">✨ Your Memory Strip ✨</h2>
         <canvas id="finalCanvas"></canvas>
-        <button id="download-btn" style="background:#ff477e; color:white; margin-top:20px;">📥 Download</button>
+        <button id="download-btn" style="background:#ff477e; color:white; margin-top:20px; font-weight: bold; padding: 12px 24px; border-radius: 12px; box-shadow: var(--glow);">📥 Download Photo Strip</button>
     </div>
 
     <script>
@@ -342,53 +342,64 @@
         });
 
         function captureFrame() {
-            const isMobile = window.innerWidth < 600;
             const snap = document.createElement('canvas');
-            snap.width = isMobile ? 400 : 800;
-            snap.height = isMobile ? 640 : 320;
+            // Force horizontal side-by-side dimensions universally
+            snap.width = 800;
+            snap.height = 320;
             const sCtx = snap.getContext('2d');
 
-            if (currentFilter === 'vintage') sCtx.filter = 'sepia(0.5)';
-            else if (currentFilter === 'cyber') sCtx.filter = 'hue-rotate(45deg)';
-            else if (currentFilter === 'noir') sCtx.filter = 'grayscale(1)';
+            if (currentFilter === 'vintage') sCtx.filter = 'sepia(0.5) contrast(1.1)';
+            else if (currentFilter === 'cyber') sCtx.filter = 'hue-rotate(45deg) saturate(1.2)';
+            else if (currentFilter === 'noir') sCtx.filter = 'grayscale(1) contrast(1.2)';
 
-            // Draw You
+            // Left side: You (Mirrored)
             sCtx.save();
-            sCtx.translate(400, 0); sCtx.scale(-1, 1);
+            sCtx.translate(400, 0); 
+            sCtx.scale(-1, 1);
             sCtx.drawImage(localVideo, 0, 0, 400, 320);
             sCtx.restore();
 
-            // Draw Partner
+            // Right side: Partner
             if (remoteVideo.srcObject) {
-                if (isMobile) sCtx.drawImage(remoteVideo, 0, 320, 400, 320);
-                else sCtx.drawImage(remoteVideo, 400, 0, 400, 320);
+                sCtx.drawImage(remoteVideo, 400, 0, 400, 320);
+            } else {
+                // Temporary mockup block if partner disconnects mid-snap
+                sCtx.fillStyle = '#15102a';
+                sCtx.fillRect(400, 0, 400, 320);
             }
             capturedFrames.push(snap.toDataURL('image/png'));
         }
 
         function buildStrip() {
-            const isMobile = window.innerWidth < 600;
-            const w = isMobile ? 400 : 800;
-            const h = isMobile ? 640 : 320;
-            const p = 20;
+            const w = 800;
+            const h = 320;
+            const p = 24; // Padding border size
+            
             canvas.width = w + (p * 2);
             canvas.height = (h * 4) + (p * 5);
-            ctx.fillStyle = "#fff";
+            
+            // Premium glossy dark background choice
+            ctx.fillStyle = "#09070f";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            let loadedCount = 0;
             capturedFrames.forEach((src, i) => {
                 const img = new Image();
                 img.onload = () => {
                     ctx.drawImage(img, p, p + (i * (h + p)), w, h);
-                    if (i === 3) document.getElementById('strip-output').style.display = 'block';
+                    loadedCount++;
+                    if (loadedCount === 4) {
+                        document.getElementById('strip-output').style.display = 'block';
+                        document.getElementById('strip-output').scrollIntoView({ behavior: 'smooth' });
+                    }
                 };
                 img.src = src;
             });
             
             document.getElementById('download-btn').onclick = () => {
                 const link = document.createElement('a');
-                link.download = 'photostrip.jpg';
-                link.href = canvas.toDataURL('image/jpeg');
+                link.download = 'date-night-strip.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
             };
         }
