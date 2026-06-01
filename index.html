@@ -87,11 +87,6 @@
             box-sizing: border-box;
         }
 
-        input[type="text"]:focus {
-            border-color: var(--accent-pink);
-            box-shadow: 0 0 10px rgba(255, 71, 126, 0.2);
-        }
-
         button {
             font-weight: 700;
             border: none;
@@ -100,7 +95,6 @@
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             font-size: 0.95rem;
-            letter-spacing: 0.5px;
         }
 
         #join-btn {
@@ -108,11 +102,6 @@
             color: white;
             box-shadow: var(--glow);
             white-space: nowrap;
-        }
-
-        #join-btn:hover {
-            transform: translateY(-2px);
-            opacity: 0.95;
         }
 
         .split-booth {
@@ -138,7 +127,6 @@
             border-radius: 12px;
             overflow: hidden;
             background: #0b0914;
-            border: 1px solid rgba(255,255,255,0.03);
         }
 
         video {
@@ -155,20 +143,6 @@
         .filter-cyber { filter: hue-rotate(45deg) saturate(1.4) contrast(1.1); }
         .filter-noir { filter: grayscale(1) contrast(1.25) brightness(0.9); }
 
-        .tag {
-            position: absolute;
-            bottom: 12px; left: 12px;
-            background: rgba(0,0,0,0.6);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.85);
-        }
-
         .filter-toolbar {
             display: flex;
             flex-wrap: wrap;
@@ -178,7 +152,6 @@
             background: rgba(0,0,0,0.2);
             padding: 8px;
             border-radius: 12px;
-            border: 1px solid var(--panel-border);
             width: 100%;
             box-sizing: border-box;
         }
@@ -191,7 +164,6 @@
             border-radius: 8px;
             flex: 1;
             min-width: 80px;
-            text-align: center;
         }
 
         .filter-btn.active {
@@ -207,10 +179,7 @@
             font-size: 80px;
             font-weight: 900;
             color: #fff;
-            text-shadow: 0 0 30px rgba(255,71,126,0.8), 0 4px 20px rgba(0,0,0,0.6);
             z-index: 10;
-            pointer-events: none;
-            font-variant-numeric: tabular-nums;
         }
 
         #action-btn {
@@ -218,8 +187,6 @@
             color: white;
             margin-top: 25px;
             padding: 16px 40px;
-            font-size: 1rem;
-            box-shadow: 0 8px 20px rgba(155, 81, 224, 0.3);
             width: 100%;
             max-width: 300px;
         }
@@ -227,14 +194,7 @@
         #action-btn:disabled {
             background: #2a2635;
             color: #5a5568;
-            box-shadow: none;
             cursor: not-allowed;
-            transform: none;
-        }
-
-        #action-btn:not(:disabled):hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(155, 81, 224, 0.4);
         }
 
         #strip-output {
@@ -242,20 +202,6 @@
             display: none;
             text-align: center;
             width: 100%;
-            animation: fadeIn 0.6s ease;
-        }
-
-        #download-btn {
-            display: none;
-            margin: 20px auto;
-            background: #ff477e;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(255, 71, 126, 0.3);
         }
 
         canvas {
@@ -263,23 +209,16 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.5);
             max-width: 100%;
             height: auto;
-            border: 1px solid rgba(255,255,255,0.1);
         }
 
+        /* 📱 Mobile Layout Overrides */
         @media (max-width: 600px) {
             .split-booth {
                 grid-template-columns: 1fr;
                 grid-template-rows: 1fr 1fr;
                 height: 440px;
             }
-            h1 { font-size: 1.6rem; }
             .room-controls { flex-direction: column; }
-            #join-btn { width: 100%; }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -297,11 +236,9 @@
         <div class="split-booth">
             <div class="video-container">
                 <video id="localVideo" class="local-video filter-normal" autoplay playsinline muted></video>
-                <div class="tag">YOU</div>
             </div>
             <div class="video-container">
                 <video id="remoteVideo" class="filter-normal" autoplay playsinline></video>
-                <div class="tag">PARTNER</div>
             </div>
             <div id="countdown" class="countdown"></div>
         </div>
@@ -317,37 +254,25 @@
     </div>
 
     <div id="strip-output">
-        <h2 style="font-size: 1.4rem; margin-bottom: 20px; color: #e2e8f0;">✨ Your Memory Strip ✨</h2>
+        <h2 style="color: #e2e8f0;">✨ Your Memory Strip ✨</h2>
         <canvas id="finalCanvas"></canvas>
-        <button id="download-btn">📥 Download Photo Strip</button>
-        <p style="color: #a0aec0; font-size: 0.85rem; margin-top: 15px;">Photos are private and stay in your browser</p>
+        <button id="download-btn" style="background:#ff477e; color:white; margin-top:20px;">📥 Download</button>
     </div>
 
     <script>
         const socket = io();
-        let localStream;
-        let peer = null;
-        let roomId;
-        let capturedFrames = [];
-        let currentFilter = 'normal';
+        let localStream, peer = null, roomId, capturedFrames = [], currentFilter = 'normal';
 
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
         const countdownEl = document.getElementById('countdown');
         const actionBtn = document.getElementById('action-btn');
-        const joinBtn = document.getElementById('join-btn');
         const canvas = document.getElementById('finalCanvas');
         const ctx = canvas.getContext('2d');
-        const downloadBtn = document.getElementById('download-btn');
 
         async function setupCamera() {
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                localVideo.srcObject = localStream;
-            } catch(e) {
-                console.error("Camera access error:", e);
-                alert("Webcam not detected. Please verify permissions!");
-            }
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            localVideo.srcObject = localStream;
         }
 
         function changeFilter(filterType, element) {
@@ -356,81 +281,48 @@
             remoteVideo.className = `filter-${filterType}`;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
-            if(roomId) {
-                socket.emit('filter-change', { room: roomId, filter: filterType });
-            }
+            if(roomId) socket.emit('filter-change', { room: roomId, filter: filterType });
         }
 
         socket.on('update-filter', (filterType) => {
             currentFilter = filterType;
             localVideo.className = `local-video filter-${filterType}`;
             remoteVideo.className = `filter-${filterType}`;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                if(btn.innerText.toLowerCase().includes(filterType.substring(0,3))) {
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                }
-            });
         });
 
         function connectToRoom() {
             roomId = document.getElementById('room-input').value;
-            if(!roomId) return alert("Please enter a room name!");
             socket.emit('join-room', roomId);
-            joinBtn.innerText = "Connected ✓";
-            joinBtn.style.background = "linear-gradient(135deg, #2ed573 0%, #1abc9c 100%)";
+            document.getElementById('join-btn').innerText = "Connected ✓";
         }
 
-        socket.on('peer-joined', (peerId) => {
-            initPeer(peerId, true);
-        });
-
+        socket.on('peer-joined', (peerId) => initPeer(peerId, true));
         socket.on('signal', (data) => {
             if (!peer) initPeer(data.from, false);
             peer.signal(data.signal);
         });
 
         function initPeer(peerId, initiator) {
-            try {
-                if (typeof SimplePeer === 'undefined') return;
-                
-                peer = new SimplePeer({
-                    initiator: initiator,
-                    trickle: false,
-                    stream: localStream,
-                    config: {
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' }, 
-                            {
-                                urls: 'turn:global.relay.metered.ca:80',
-                                username: '15c013330465beb992824e1d', 
-                                credential: 'QfeD7i9mmg060Fr3' 
-                            },
-                            {
-                                urls: 'turn:global.relay.metered.ca:443?transport=tcp',
-                                username: '15c013330465beb992824e1d', 
-                                credential: 'QfeD7i9mmg060Fr3' 
-                            }
-                        ]
-                    }
-                });
-
-                peer.on('signal', (signal) => {
-                    socket.emit('signal', { to: peerId, signal: signal });
-                });
-
-                peer.on('stream', (stream) => {
-                    remoteVideo.srcObject = stream;
-                    actionBtn.disabled = false;
-                });
-            } catch(err) {
-                console.error(err);
-            }
+            peer = new SimplePeer({
+                initiator: initiator,
+                trickle: false,
+                stream: localStream,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'turn:global.relay.metered.ca:80', username: '15c013330465beb992824e1d', credential: 'QfeD7i9mmg060Fr3' },
+                        { urls: 'turn:global.relay.metered.ca:443?transport=tcp', username: '15c013330465beb992824e1d', credential: 'QfeD7i9mmg060Fr3' }
+                    ]
+                }
+            });
+            peer.on('signal', (signal) => socket.emit('signal', { to: peerId, signal: signal }));
+            peer.on('stream', (stream) => {
+                remoteVideo.srcObject = stream;
+                actionBtn.disabled = false;
+            });
         }
 
-        function syncTrigger() {
-            socket.emit('trigger-booth', roomId);
-        }
+        function syncTrigger() { socket.emit('trigger-booth', roomId); }
 
         socket.on('start-countdown', async () => {
             actionBtn.disabled = true;
@@ -441,61 +333,64 @@
                     await new Promise(r => setTimeout(r, 1000));
                 }
                 countdownEl.innerText = "📸";
-                captureSharedFrame();
+                captureFrame();
                 await new Promise(r => setTimeout(r, 800));
                 countdownEl.innerText = "";
             }
-            buildLongDistanceStrip();
+            buildStrip();
             actionBtn.disabled = false;
         });
 
-        function captureSharedFrame() {
-            const snapCanvas = document.createElement('canvas');
-            snapCanvas.width = 800;
-            snapCanvas.height = 320;
-            const sCtx = snapCanvas.getContext('2d');
+        function captureFrame() {
+            const isMobile = window.innerWidth < 600;
+            const snap = document.createElement('canvas');
+            snap.width = isMobile ? 400 : 800;
+            snap.height = isMobile ? 640 : 320;
+            const sCtx = snap.getContext('2d');
 
-            if (currentFilter === 'vintage') sCtx.filter = 'sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.1)';
-            else if (currentFilter === 'cyber') sCtx.filter = 'hue-rotate(45deg) saturate(1.4) contrast(1.1)';
-            else if (currentFilter === 'noir') sCtx.filter = 'grayscale(1) contrast(1.25) brightness(0.9)';
+            if (currentFilter === 'vintage') sCtx.filter = 'sepia(0.5)';
+            else if (currentFilter === 'cyber') sCtx.filter = 'hue-rotate(45deg)';
+            else if (currentFilter === 'noir') sCtx.filter = 'grayscale(1)';
 
+            // Draw You
             sCtx.save();
-            sCtx.translate(400, 0);
-            sCtx.scale(-1, 1);
-            sCtx.drawImage(localVideo, -400, 0, 400, 320);
+            sCtx.translate(400, 0); sCtx.scale(-1, 1);
+            sCtx.drawImage(localVideo, 0, 0, 400, 320);
             sCtx.restore();
-            try { sCtx.drawImage(remoteVideo, 400, 0, 400, 320); } catch(e) {}
-            capturedFrames.push(snapCanvas.toDataURL('image/png'));
+
+            // Draw Partner
+            if (remoteVideo.srcObject) {
+                if (isMobile) sCtx.drawImage(remoteVideo, 0, 320, 400, 320);
+                else sCtx.drawImage(remoteVideo, 400, 0, 400, 320);
+            }
+            capturedFrames.push(snap.toDataURL('image/png'));
         }
 
-        function buildLongDistanceStrip() {
-            const w = 800; const h = 320; const padding = 24;
-            canvas.width = w + (padding * 2);
-            canvas.height = (h * 4) + (padding * 5) + 40;
-            ctx.fillStyle = "#ffffff";
+        function buildStrip() {
+            const isMobile = window.innerWidth < 600;
+            const w = isMobile ? 400 : 800;
+            const h = isMobile ? 640 : 320;
+            const p = 20;
+            canvas.width = w + (p * 2);
+            canvas.height = (h * 4) + (p * 5);
+            ctx.fillStyle = "#fff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            let rendered = 0;
-            capturedFrames.forEach((src, idx) => {
+            capturedFrames.forEach((src, i) => {
                 const img = new Image();
-                img.src = src;
                 img.onload = () => {
-                    ctx.drawImage(img, padding, padding + (idx * (h + padding)), w, h);
-                    rendered++;
-                    if (rendered === 4) {
-                        document.getElementById('strip-output').style.display = 'block';
-                        downloadBtn.style.display = 'block';
-                        document.getElementById('strip-output').scrollIntoView({ behavior: 'smooth' });
-                        
-                        downloadBtn.onclick = () => {
-                            const link = document.createElement('a');
-                            link.download = 'date-night-memory.jpg';
-                            link.href = canvas.toDataURL('image/jpeg', 0.9);
-                            link.click();
-                        };
-                    }
+                    ctx.drawImage(img, p, p + (i * (h + p)), w, h);
+                    if (i === 3) document.getElementById('strip-output').style.display = 'block';
                 };
+                img.src = src;
             });
+            
+            document.getElementById('download-btn').onclick = () => {
+                const link = document.createElement('a');
+                link.download = 'photostrip.jpg';
+                link.href = canvas.toDataURL('image/jpeg');
+                link.click();
+            };
         }
 
         setupCamera();
