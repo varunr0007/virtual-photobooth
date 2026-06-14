@@ -3,66 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Long-Distance Virtual Date Booth</title>
+    <title>Long-Distance Virtual Date Booth Studio</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #0f0c20 0%, #15102a 50%, #24142c 100%);
-            --panel-bg: rgba(255, 255, 255, 0.04);
-            --panel-border: rgba(255, 255, 255, 0.08);
+            --panel-bg: rgba(255, 255, 255, 0.05);
+            --panel-border: rgba(255, 255, 255, 0.1);
             --accent-pink: #ff477e;
+            --accent-blue: #00f3ff;
             --accent-purple: #9b51e0;
-            --glow: 0 0 20px rgba(255, 71, 126, 0.4);
+            --glow: 0 0 20px rgba(255, 71, 126, 0.3);
         }
 
         body {
             background: var(--bg-gradient);
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
-            padding: 20px 10px;
-            min-height: 100vh;
-            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
         }
 
         h1 {
-            font-size: 2.2rem;
+            font-size: 2.4rem;
             font-weight: 800;
             letter-spacing: 2px;
-            margin-bottom: 5px;
-            text-align: center;
-            background: linear-gradient(to right, #ff477e, #ff7676, #9b51e0);
+            margin: 0 0 5px 0;
+            background: linear-gradient(to right, #ff477e, #00f3ff, #9b51e0);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .subtitle {
             color: #a0aec0;
             font-size: 0.95rem;
-            margin-bottom: 35px;
             letter-spacing: 1px;
-            text-align: center;
-        }
-
-        .container {
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 25px;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 860px;
-            box-sizing: border-box;
         }
 
         .room-controls {
@@ -70,52 +57,149 @@
             gap: 12px;
             margin-bottom: 25px;
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
+            justify-content: center;
         }
 
         input[type="text"] {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--panel-border);
-            padding: 14px 20px;
-            border-radius: 14px;
+            padding: 12px 20px;
+            border-radius: 12px;
             color: #fff;
             font-size: 1rem;
             outline: none;
+            width: 200px;
             transition: all 0.3s ease;
-            width: 100%;
-            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
         }
 
         button {
             font-weight: 700;
             border: none;
-            padding: 14px 28px;
-            border-radius: 14px;
+            padding: 12px 24px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             font-size: 0.95rem;
         }
 
-        #join-btn {
-            background: linear-gradient(135deg, #ff477e 0%, #ff6b8b 100%);
+        .btn-primary {
+            background: linear-gradient(135deg, #ff477e 0%, #9b51e0 100%);
             color: white;
             box-shadow: var(--glow);
-            white-space: nowrap;
+        }
+
+        /* 🏢 Studio Dashboard Architecture */
+        .studio-dashboard {
+            display: grid;
+            grid-template-columns: 240px 1fr 260px;
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+            align-items: start;
+        }
+
+        .studio-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #a0aec0;
+            margin-bottom: 15px;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 8px;
+            text-align: center;
+        }
+
+        /* 🕶️ Grid Props System */
+        .props-grid, .templates-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .prop-item, .template-item {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .prop-item:hover, .template-item:hover {
+            border-color: var(--accent-blue);
+            background: rgba(255,255,255,0.03);
+            transform: translateY(-2px);
+        }
+
+        .prop-item.active, .template-item.active {
+            border-color: var(--accent-pink);
+            background: rgba(255, 71, 126, 0.1);
+            box-shadow: 0 0 12px rgba(255, 71, 126, 0.2);
+        }
+
+        .prop-svg {
+            width: 50px;
+            height: 35px;
+            fill: #fff;
+            transition: fill 0.3s;
+        }
+        .prop-item.active .prop-svg { fill: var(--accent-pink); }
+
+        .template-thumb {
+            width: 100%;
+            height: 70px;
+            border-radius: 6px;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .template-item span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        /* 🎬 Central Main Stage Layout */
+        .main-stage {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .split-booth {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            width: 100%;
-            max-width: 800px;
-            height: 320px;
-            background: rgba(0,0,0,0.4);
+            height: 340px;
+            background: rgba(0,0,0,0.3);
             border: 1px solid var(--panel-border);
             border-radius: 20px;
             position: relative;
-            overflow: hidden;
             padding: 16px;
             box-sizing: border-box;
         }
@@ -124,55 +208,59 @@
             position: relative;
             width: 100%;
             height: 100%;
-            border-radius: 12px;
+            border-radius: 14px;
             overflow: hidden;
-            background: #0b0914;
+            background: #09070f;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: filter 0.4s ease;
         }
-
         .local-video { transform: scaleX(-1); }
 
-        /* 🎨 Filter Classes */
-        .filter-normal { filter: none; }
-        .filter-vintage { filter: sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.1); }
-        .filter-cyber { filter: hue-rotate(45deg) saturate(1.4) contrast(1.1); }
-        .filter-noir { filter: grayscale(1) contrast(1.25) brightness(0.9); }
-        .filter-90s { filter: contrast(1.2) brightness(1.05) saturate(0.85) sepia(0.15); }
-        .filter-sunset { filter: saturate(1.6) hue-rotate(-10deg) contrast(1.15); }
+        /* Realtime Canvas Prop Overlays */
+        .overlay-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .local-canvas { transform: scaleX(-1); }
 
-        .filter-toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 20px;
-            background: rgba(0,0,0,0.2);
-            padding: 8px;
-            border-radius: 12px;
-            width: 100%;
+        /* 🎞️ Cinematic Filmstrip Live Deck */
+        .filmstrip-deck {
+            background: #07050d;
+            border: 3px dashed #1a1625;
+            border-radius: 16px;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            height: 120px;
             box-sizing: border-box;
         }
 
-        .filter-btn {
-            background: transparent;
-            color: #a0aec0;
-            padding: 8px 14px;
-            font-size: 0.8rem;
+        .deck-slot {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
             border-radius: 8px;
-            flex: 1;
-            min-width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a4557;
+            font-size: 1.5rem;
+            font-weight: bold;
+            overflow: hidden;
+            position: relative;
         }
-
-        .filter-btn.active {
-            background: rgba(255,255,255,0.08);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.15);
+        .deck-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .countdown {
@@ -182,93 +270,147 @@
             font-size: 80px;
             font-weight: 900;
             color: #fff;
-            z-index: 10;
+            z-index: 20;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
 
-        #action-btn {
-            background: linear-gradient(135deg, #9b51e0 0%, #7033b0 100%);
-            color: white;
-            margin-top: 25px;
-            padding: 16px 40px;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        #action-btn:disabled {
-            background: #2a2635;
-            color: #5a5568;
-            cursor: not-allowed;
-        }
-
+        /* 📥 Output Presentation Deck */
         #strip-output {
-            margin-top: 40px;
+            margin-top: 30px;
             display: none;
             text-align: center;
             width: 100%;
         }
-
-        canvas {
-            border-radius: 16px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        #finalCanvas {
+            border-radius: 12px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
             max-width: 100%;
             height: auto;
         }
 
+        /* Responsive Flow Adaptation */
+        @media (max-width: 1050px) {
+            .studio-dashboard {
+                grid-template-columns: 1fr;
+            }
+            .props-grid, .templates-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
         @media (max-width: 600px) {
             .split-booth {
                 grid-template-columns: 1fr;
-                grid-template-rows: 1fr 1fr;
-                height: 440px;
+                height: 460px;
             }
-            .room-controls { flex-direction: column; }
+            .props-grid, .templates-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .filmstrip-deck { grid-template-columns: 1fr 1fr; height: auto; gap: 8px;}
+            .deck-slot { height: 80px; }
         }
     </style>
 </head>
 <body>
 
-    <h1>VIRTUAL PHOTOBOOTH</h1>
-    <div class="subtitle">LONG-DISTANCE DATE NIGHT</div>
+    <header>
+        <h1>VIRTUAL DATE STUDIO</h1>
+        <div class="subtitle">Customizable Realtime Photobooth</div>
+    </header>
 
-    <div class="container">
-        <div class="room-controls">
-            <input type="text" id="room-input" placeholder="Enter Room ID" value="date-night">
-            <button id="join-btn" onclick="connectToRoom()">Join Room</button>
-        </div>
+    <div class="room-controls">
+        <input type="text" id="room-input" placeholder="Room ID" value="date-night">
+        <button id="join-btn" class="btn-primary" onclick="connectToRoom()">Join Studio</button>
+    </div>
 
-        <div class="split-booth">
-            <div class="video-container">
-                <video id="localVideo" class="local-video filter-normal" autoplay playsinline muted></video>
+    <div class="studio-dashboard">
+        
+        <div class="studio-panel">
+            <div class="panel-title">Props & Accessories</div>
+            <div class="props-grid">
+                <div class="prop-item" id="prop-none" onclick="selectProp('none', this)">
+                    <span style="font-size:1.5rem;">❌</span>
+                    <span style="font-size:0.75rem; font-weight:600;">Clear</span>
+                </div>
+                <div class="prop-item" id="prop-glasses" onclick="selectProp('glasses', this)">
+                    <svg class="prop-svg" viewBox="0 0 24 24"><path d="M4 8.5a2.5 2.5 0 0 1 4.75-.75h4.5a2.5 2.5 0 0 1 4.75.75 2.5 2.5 0 1 1-5 0h-1a2.5 2.5 0 1 1-5 0h-1a2.5 2.5 0 0 1-2.5 2.5zm0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm16-1.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0z"/></svg>
+                    <span>Retro Red</span>
+                </div>
+                <div class="prop-item" id="prop-mustache" onclick="selectProp('mustache', this)">
+                    <svg class="prop-svg" viewBox="0 0 24 24"><path d="M12 14c-1.5-2.5-4.5-3.5-7-3.5A4.5 4.5 0 0 0 0.5 15c0 2 2 3.5 4.5 3.5 4 0 5.5-2.5 7-4.5 1.5 2 3 4.5 7 4.5 2.5 0 4.5-1.5 4.5-3.5a4.5 4.5 0 0 0-4.5-4.5c-2.5 0-5.5 1-7 3.5z"/></svg>
+                    <span>Mustache</span>
+                </div>
+                <div class="prop-item" id="prop-bowtie" onclick="selectProp('bowtie', this)">
+                    <svg class="prop-svg" viewBox="0 0 24 24"><path d="M3 6l5 4-5 4V6zm18 0v8l-5-4 5-4zm-10 4a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM8.3 10.5l3.7-3 3.7 3-3.7 3-3.7-3z"/></svg>
+                    <span>Classy Bow</span>
+                </div>
             </div>
-            <div class="video-container">
-                <video id="remoteVideo" class="filter-normal" autoplay playsinline></video>
+        </div>
+
+        <div class="main-stage">
+            <div class="split-booth">
+                <div class="video-container">
+                    <video id="localVideo" autoplay playsinline muted></video>
+                    <canvas id="localOverlay" class="overlay-canvas local-canvas"></canvas>
+                </div>
+                <div class="video-container">
+                    <video id="remoteVideo" autoplay playsinline></video>
+                    <canvas id="remoteOverlay" class="overlay-canvas"></canvas>
+                </div>
+                <div id="countdown" class="countdown"></div>
             </div>
-            <div id="countdown" class="countdown"></div>
+
+            <div class="filmstrip-deck">
+                <div class="deck-slot" id="slot-0">1</div>
+                <div class="deck-slot" id="slot-1">2</div>
+                <div class="deck-slot" id="slot-2">3</div>
+                <div class="deck-slot" id="slot-3">4</div>
+            </div>
+
+            <button id="action-btn" class="btn-primary" style="padding:16px; font-size:1.1rem;" onclick="syncTrigger()" disabled>SNAP BOOTH WORKSPACE</button>
         </div>
 
-        <div class="filter-toolbar">
-            <button class="filter-btn active" onclick="changeFilter('normal', this)">Normal</button>
-            <button class="filter-btn" onclick="changeFilter('vintage', this)">Retro Warm</button>
-            <button class="filter-btn" onclick="changeFilter('cyber', this)">Cyber Neon</button>
-            <button class="filter-btn" onclick="changeFilter('noir', this)">B&W Noir</button>
-            <button class="filter-btn" onclick="changeFilter('90s', this)">90s Flash</button>
-            <button class="filter-btn" onclick="changeFilter('sunset', this)">Vibrant Sunset</button>
+        <div class="studio-panel">
+            <div class="panel-title">Templates & Layouts</div>
+            <div class="templates-grid">
+                <div class="template-item active" onclick="selectTemplate('midnight', this)">
+                    <div class="template-thumb" style="background-color:#09070f; border: 2px solid #1a1625;"></div>
+                    <span>Midnight Dark</span>
+                </div>
+                <div class="template-item" onclick="selectTemplate('filmstrip', this)">
+                    <div class="template-thumb" style="background: repeating-linear-gradient(90deg, #111, #111 20px, #fff 21px, #fff 25px)"></div>
+                    <span>🎞️ Vintage Film</span>
+                </div>
+                <div class="template-item" onclick="selectTemplate('retro', this)">
+                    <div class="template-thumb" style="background-color:#f4ebd0;"></div>
+                    <span>📼 Matte Polaroid</span>
+                </div>
+                <div class="template-item" onclick="selectTemplate('festive', this)">
+                    <div class="template-thumb" style="background: linear-gradient(45deg, #ff477e, #9b51e0);"></div>
+                    <span>💖 Anniversary</span>
+                </div>
+            </div>
         </div>
 
-        <button id="action-btn" onclick="syncTrigger()" disabled>SNAP TOGETHER</button>
     </div>
 
     <div id="strip-output">
-        <h2 style="color: #e2e8f0;">✨ Your Memory Strip ✨</h2>
+        <h2 style="color: #e2e8f0; margin-bottom:20px;">✨ Your Custom Studio Masterpiece ✨</h2>
         <canvas id="finalCanvas"></canvas>
-        <button id="download-btn" style="background:#ff477e; color:white; margin-top:20px; font-weight: bold; padding: 12px 24px; border-radius: 12px; box-shadow: var(--glow);">📥 Download Photo Strip</button>
+        <br>
+        <button id="download-btn" class="btn-primary" style="margin-top:25px; padding: 14px 35px;">📥 Save High-Res Photo Strip</button>
     </div>
 
     <script>
         const socket = io();
-        let localStream, peer = null, roomId, capturedFrames = [], currentFilter = 'normal';
+        let localStream, peer = null, roomId, capturedFrames = [];
+        let activeProp = 'none';
+        let activeTemplate = 'midnight';
 
+        // Layout UI Hooks
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
+        const localOverlay = document.getElementById('localOverlay');
+        const remoteOverlay = document.getElementById('remoteOverlay');
         const countdownEl = document.getElementById('countdown');
         const actionBtn = document.getElementById('action-btn');
         const canvas = document.getElementById('finalCanvas');
@@ -277,33 +419,83 @@
         async function setupCamera() {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
             localVideo.srcObject = localStream;
+            // Initiate loops to draw chosen accessories over live feeds
+            requestAnimationFrame(() => drawOverlayLoop(localVideo, localOverlay, 'local'));
+            requestAnimationFrame(() => drawOverlayLoop(remoteVideo, remoteOverlay, 'remote'));
         }
 
-        function changeFilter(filterType, element) {
-            currentFilter = filterType;
-            localVideo.className = `local-video filter-${filterType}`;
-            remoteVideo.className = `filter-${filterType}`;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            if(roomId) socket.emit('filter-change', { room: roomId, filter: filterType });
-        }
+        // Digital Accessory Canvas Generator Loop
+        function drawOverlayLoop(video, overlayCanvas, source) {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                overlayCanvas.width = video.videoWidth;
+                overlayCanvas.height = video.videoHeight;
+                const oCtx = overlayCanvas.getContext('2d');
+                oCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
-        socket.on('update-filter', (filterType) => {
-            currentFilter = filterType;
-            localVideo.className = `local-video filter-${filterType}`;
-            remoteVideo.className = `filter-${filterType}`;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if(btn.getAttribute('onclick').includes(`'${filterType}'`)) {
-                    btn.classList.add('active');
+                // Use calibrated static layout parameters based on active choice
+                const prop = source === 'local' ? activeProp : window.remoteProp || 'none';
+                
+                if (prop !== 'none') {
+                    const cx = overlayCanvas.width / 2;
+                    const cy = overlayCanvas.height / 2 - 20; // Estimated face level center
+                    oCtx.save();
+
+                    if (prop === 'glasses') {
+                        oCtx.fillStyle = '#ff477e';
+                        // Left eye rim
+                        oCtx.beginPath(); oCtx.arc(cx - 75, cy, 45, 0, Math.PI * 2); oCtx.lineWidth = 10; oCtx.strokeStyle = '#ff477e'; oCtx.stroke();
+                        // Right eye rim
+                        oCtx.beginPath(); oCtx.arc(cx + 75, cy, 45, 0, Math.PI * 2); oCtx.stroke();
+                        // Connector Bridge
+                        oCtx.fillRect(cx - 35, cy - 5, 70, 10);
+                    } else if (prop === 'mustache') {
+                        oCtx.fillStyle = '#1a1625';
+                        oCtx.beginPath();
+                        oCtx.quadraticCurveTo(cx - 40, cy + 60, cx - 100, cy + 50);
+                        oCtx.quadraticCurveTo(cx - 40, cy + 100, cx, cy + 60);
+                        oCtx.quadraticCurveTo(cx + 40, cy + 100, cx + 100, cy + 50);
+                        oCtx.quadraticCurveTo(cx + 40, cy + 60, cx, cy + 50);
+                        oCtx.fill();
+                    } else if (prop === 'bowtie') {
+                        oCtx.fillStyle = '#9b51e0';
+                        const ty = cy + 160; // Neck level placement
+                        oCtx.beginPath();
+                        oCtx.moveTo(cx, ty);
+                        oCtx.lineTo(cx - 70, ty - 40); oCtx.lineTo(cx - 70, ty + 40);
+                        oCtx.lineTo(cx, ty);
+                        oCtx.lineTo(cx + 70, ty - 40); oCtx.lineTo(cx + 70, ty + 40);
+                        oCtx.closePath(); oCtx.fill();
+                        // Center Knot
+                        oCtx.fillStyle = '#ffffff';
+                        oCtx.beginPath(); oCtx.arc(cx, ty, 14, 0, Math.PI * 2); oCtx.fill();
+                    }
+                    oCtx.restore();
                 }
-            });
-        });
+            }
+            requestAnimationFrame(() => drawOverlayLoop(video, overlayCanvas, source));
+        }
+
+        function selectProp(propName, element) {
+            activeProp = propName;
+            document.querySelectorAll('.prop-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            if(roomId) socket.emit('studio-prop', { room: roomId, prop: propName });
+        }
+
+        function selectTemplate(templateName, element) {
+            activeTemplate = templateName;
+            document.querySelectorAll('.template-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // Live syncing pipelines
+        socket.on('update-studio-prop', (propName) => { window.remoteProp = propName; });
 
         function connectToRoom() {
             roomId = document.getElementById('room-input').value;
             socket.emit('join-room', roomId);
-            document.getElementById('join-btn').innerText = "Connected ✓";
+            document.getElementById('join-btn').innerText = "Connected Studio ✓";
+            document.getElementById('join-btn').style.background = "#00f3ff";
         }
 
         socket.on('peer-joined', (peerId) => initPeer(peerId, true));
@@ -314,16 +506,8 @@
 
         function initPeer(peerId, initiator) {
             peer = new SimplePeer({
-                initiator: initiator,
-                trickle: false,
-                stream: localStream,
-                config: {
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'turn:global.relay.metered.ca:80', username: '15c013330465beb992824e1d', credential: 'QfeD7i9mmg060Fr3' },
-                        { urls: 'turn:global.relay.metered.ca:443?transport=tcp', username: '15c013330465beb992824e1d', credential: 'QfeD7i9mmg060Fr3' }
-                    ]
-                }
+                initiator: initiator, trickle: false, stream: localStream,
+                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
             });
             peer.on('signal', (signal) => socket.emit('signal', { to: peerId, signal: signal }));
             peer.on('stream', (stream) => {
@@ -337,76 +521,101 @@
         socket.on('start-countdown', async () => {
             actionBtn.disabled = true;
             capturedFrames = [];
+            // Reset image shelf preview deck slots
+            for(let s=0; s<4; s++) document.getElementById(`slot-${s}`).innerHTML = s+1;
+
             for (let i = 0; i < 4; i++) {
                 for (let count = 3; count > 0; count--) {
                     countdownEl.innerText = count;
                     await new Promise(r => setTimeout(r, 1000));
                 }
                 countdownEl.innerText = "📸";
-                captureFrame();
+                captureStudioFrame(i);
                 await new Promise(r => setTimeout(r, 800));
                 countdownEl.innerText = "";
             }
-            buildStrip();
+            buildStudioStrip();
             actionBtn.disabled = false;
         });
 
-        function captureFrame() {
+        function captureStudioFrame(slotIndex) {
             const snap = document.createElement('canvas');
-            snap.width = 800;
-            snap.height = 320;
+            snap.width = 800; snap.height = 320;
             const sCtx = snap.getContext('2d');
 
-            // Apply filter rules to structural final snapshot canvas
-            if (currentFilter === 'vintage') sCtx.filter = 'sepia(0.5) contrast(1.1)';
-            else if (currentFilter === 'cyber') sCtx.filter = 'hue-rotate(45deg) saturate(1.2)';
-            else if (currentFilter === 'noir') sCtx.filter = 'grayscale(1) contrast(1.2)';
-            else if (currentFilter === '90s') sCtx.filter = 'contrast(1.2) brightness(1.05) saturate(0.85) sepia(0.15)';
-            else if (currentFilter === 'sunset') sCtx.filter = 'saturate(1.6) hue-rotate(-10deg) contrast(1.15)';
-
-            // Left side: You (Mirrored)
+            // Draw left frame (You + Active overlay element baked in)
             sCtx.save();
-            sCtx.translate(400, 0); 
-            sCtx.scale(-1, 1);
+            sCtx.translate(400, 0); sCtx.scale(-1, 1);
             sCtx.drawImage(localVideo, 0, 0, 400, 320);
+            sCtx.translate(400, 0); sCtx.scale(-1, 1); // unmirror overlay canvas drawing
+            sCtx.drawImage(localOverlay, 0, 0, 400, 320);
             sCtx.restore();
 
-            // Right side: Partner
+            // Draw right frame (Partner + Active incoming overlay canvas)
             if (remoteVideo.srcObject) {
                 sCtx.drawImage(remoteVideo, 400, 0, 400, 320);
+                sCtx.drawImage(remoteOverlay, 400, 0, 400, 320);
             } else {
-                sCtx.fillStyle = '#15102a';
-                sCtx.fillRect(400, 0, 400, 320);
+                sCtx.fillStyle = '#110e1a'; sCtx.fillRect(400, 0, 400, 320);
             }
-            capturedFrames.push(snap.toDataURL('image/png'));
+
+            const dataUrl = snap.toDataURL('image/png');
+            capturedFrames.push(dataUrl);
+
+            // Dynamically inject captured image into lower filmstrip shelf deck
+            const slot = document.getElementById(`slot-${slotIndex}`);
+            slot.innerHTML = `<img src="${dataUrl}">`;
         }
 
-        function buildStrip() {
+        function buildStudioStrip() {
             const w = 800; const h = 320; const p = 24;
-            
             canvas.width = w + (p * 2);
-            canvas.height = (h * 4) + (p * 5);
-            
-            ctx.fillStyle = "#09070f";
+            canvas.height = (h * 4) + (p * 5) + 60;
+
+            // Render selected border template styles
+            if (activeTemplate === 'midnight') ctx.fillStyle = "#09070f";
+            else if (activeTemplate === 'retro') ctx.fillStyle = "#f4ebd0";
+            else if (activeTemplate === 'festive') ctx.fillStyle = "#fff0f5";
+            else if (activeTemplate === 'filmstrip') ctx.fillStyle = "#111116";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             let loadedCount = 0;
             capturedFrames.forEach((src, i) => {
                 const img = new Image();
                 img.onload = () => {
-                    ctx.drawImage(img, p, p + (i * (h + p)), w, h);
+                    const rowY = p + (i * (h + p));
+                    ctx.drawImage(img, p, rowY, w, h);
+
+                    // Optional template frame graphics
+                    if (activeTemplate === 'filmstrip') {
+                        ctx.fillStyle = "#ffffff";
+                        for(let x = p; x < canvas.width - p; x += 30) {
+                            ctx.fillRect(x, rowY - 16, 14, 10); // Upper sprocket holes
+                            ctx.fillRect(x, rowY + h + 6, 14, 10); // Lower sprocket holes
+                        }
+                    } else if (activeTemplate === 'festive') {
+                        ctx.font = "24px sans-serif";
+                        ctx.fillText("❤️", p + 20, rowY + 40);
+                        ctx.fillText("❤️", p + w - 45, rowY + h - 20);
+                    }
+
                     loadedCount++;
                     if (loadedCount === 4) {
+                        // Stamp layout footer captions
+                        ctx.fillStyle = activeTemplate === 'retro' ? '#5c4d3c' : '#ffffff';
+                        ctx.font = "bold 20px monospace";
+                        ctx.fillText(`STUDIO STRIP // ROW LAYOUT // DESIGNED 2026`, p + 20, canvas.height - 30);
+                        
                         document.getElementById('strip-output').style.display = 'block';
                         document.getElementById('strip-output').scrollIntoView({ behavior: 'smooth' });
                     }
                 };
                 img.src = src;
             });
-            
+
             document.getElementById('download-btn').onclick = () => {
                 const link = document.createElement('a');
-                link.download = 'date-night-strip.jpg';
+                link.download = `studio-${activeTemplate}-strip.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
             };
