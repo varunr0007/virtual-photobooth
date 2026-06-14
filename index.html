@@ -94,7 +94,6 @@
             box-shadow: var(--glow);
         }
 
-        /* 🏢 Studio Dashboard Architecture */
         .studio-dashboard {
             display: grid;
             grid-template-columns: 240px 1fr 260px;
@@ -127,7 +126,6 @@
             text-align: center;
         }
 
-        /* 🕶️ Grid Props System */
         .props-grid, .templates-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -184,7 +182,6 @@
             color: #cbd5e1;
         }
 
-        /* 🎬 Central Main Stage Layout */
         .main-stage {
             display: flex;
             flex-direction: column;
@@ -221,7 +218,6 @@
         }
         .local-video { transform: scaleX(-1); }
 
-        /* Realtime Canvas Prop Overlays */
         .overlay-canvas {
             position: absolute;
             top: 0; left: 0;
@@ -231,7 +227,6 @@
         }
         .local-canvas { transform: scaleX(-1); }
 
-        /* 🎞️ Cinematic Filmstrip Live Deck */
         .filmstrip-deck {
             background: #07050d;
             border: 3px dashed #1a1625;
@@ -274,7 +269,6 @@
             text-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
 
-        /* 📥 Output Presentation Deck */
         #strip-output {
             margin-top: 30px;
             display: none;
@@ -288,23 +282,13 @@
             height: auto;
         }
 
-        /* Responsive Flow Adaptation */
         @media (max-width: 1050px) {
-            .studio-dashboard {
-                grid-template-columns: 1fr;
-            }
-            .props-grid, .templates-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
+            .studio-dashboard { grid-template-columns: 1fr; }
+            .props-grid, .templates-grid { grid-template-columns: repeat(4, 1fr); }
         }
         @media (max-width: 600px) {
-            .split-booth {
-                grid-template-columns: 1fr;
-                height: 460px;
-            }
-            .props-grid, .templates-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+            .split-booth { grid-template-columns: 1fr; height: 460px; }
+            .props-grid, .templates-grid { grid-template-columns: 1fr 1fr; }
             .filmstrip-deck { grid-template-columns: 1fr 1fr; height: auto; gap: 8px;}
             .deck-slot { height: 80px; }
         }
@@ -323,11 +307,10 @@
     </div>
 
     <div class="studio-dashboard">
-        
         <div class="studio-panel">
             <div class="panel-title">Props & Accessories</div>
             <div class="props-grid">
-                <div class="prop-item" id="prop-none" onclick="selectProp('none', this)">
+                <div class="prop-item active" id="prop-none" onclick="selectProp('none', this)">
                     <span style="font-size:1.5rem;">❌</span>
                     <span style="font-size:0.75rem; font-weight:600;">Clear</span>
                 </div>
@@ -349,7 +332,7 @@
         <div class="main-stage">
             <div class="split-booth">
                 <div class="video-container">
-                    <video id="localVideo" autoplay playsinline muted></video>
+                    <video id="localVideo" class="local-video" autoplay playsinline muted></video>
                     <canvas id="localOverlay" class="overlay-canvas local-canvas"></canvas>
                 </div>
                 <div class="video-container">
@@ -390,7 +373,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     <div id="strip-output">
@@ -406,7 +388,6 @@
         let activeProp = 'none';
         let activeTemplate = 'midnight';
 
-        // Layout UI Hooks
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
         const localOverlay = document.getElementById('localOverlay');
@@ -417,62 +398,75 @@
         const ctx = canvas.getContext('2d');
 
         async function setupCamera() {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-            localVideo.srcObject = localStream;
-            // Initiate loops to draw chosen accessories over live feeds
-            requestAnimationFrame(() => drawOverlayLoop(localVideo, localOverlay, 'local'));
-            requestAnimationFrame(() => drawOverlayLoop(remoteVideo, remoteOverlay, 'remote'));
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                localVideo.srcObject = localStream;
+            } catch (err) {
+                console.error("Camera access blocked: ", err);
+            }
+            requestAnimationFrame(drawLoop);
         }
 
-        // Digital Accessory Canvas Generator Loop
-        function drawOverlayLoop(video, overlayCanvas, source) {
+        // Percentage-based dynamic positioning engine
+        function drawLoop() {
+            renderPropOnCanvas(localVideo, localOverlay, activeProp);
+            renderPropOnCanvas(remoteVideo, remoteOverlay, window.remoteProp || 'none');
+            requestAnimationFrame(drawLoop);
+        }
+
+        function renderPropOnCanvas(video, canvasEl, prop) {
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                overlayCanvas.width = video.videoWidth;
-                overlayCanvas.height = video.videoHeight;
-                const oCtx = overlayCanvas.getContext('2d');
-                oCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                if (canvasEl.width !== video.videoWidth || canvasEl.height !== video.videoHeight) {
+                    canvasEl.width = video.videoWidth;
+                    canvasEl.height = video.videoHeight;
+                }
+                const oCtx = canvasEl.getContext('2d');
+                oCtx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
-                // Use calibrated static layout parameters based on active choice
-                const prop = source === 'local' ? activeProp : window.remoteProp || 'none';
-                
-                if (prop !== 'none') {
-                    const cx = overlayCanvas.width / 2;
-                    const cy = overlayCanvas.height / 2 - 20; // Estimated face level center
+                if (prop && prop !== 'none') {
+                    // Coordinates scaled to a percentage grid of the stream box
+                    const cx = canvasEl.width * 0.5;
+                    const cy = canvasEl.height * 0.42; 
+                    const scaleFactor = canvasEl.width / 640; 
+
                     oCtx.save();
-
                     if (prop === 'glasses') {
+                        oCtx.strokeStyle = '#ff477e';
                         oCtx.fillStyle = '#ff477e';
-                        // Left eye rim
-                        oCtx.beginPath(); oCtx.arc(cx - 75, cy, 45, 0, Math.PI * 2); oCtx.lineWidth = 10; oCtx.strokeStyle = '#ff477e'; oCtx.stroke();
-                        // Right eye rim
-                        oCtx.beginPath(); oCtx.arc(cx + 75, cy, 45, 0, Math.PI * 2); oCtx.stroke();
-                        // Connector Bridge
-                        oCtx.fillRect(cx - 35, cy - 5, 70, 10);
+                        oCtx.lineWidth = 8 * scaleFactor;
+                        
+                        oCtx.beginPath(); oCtx.arc(cx - (55 * scaleFactor), cy, 32 * scaleFactor, 0, Math.PI * 2); oCtx.stroke();
+                        oCtx.beginPath(); oCtx.arc(cx + (55 * scaleFactor), cy, 32 * scaleFactor, 0, Math.PI * 2); oCtx.stroke();
+                        oCtx.fillRect(cx - (25 * scaleFactor), cy - (4 * scaleFactor), 50 * scaleFactor, 8 * scaleFactor);
                     } else if (prop === 'mustache') {
                         oCtx.fillStyle = '#1a1625';
+                        const my = cy + (65 * scaleFactor);
                         oCtx.beginPath();
-                        oCtx.quadraticCurveTo(cx - 40, cy + 60, cx - 100, cy + 50);
-                        oCtx.quadraticCurveTo(cx - 40, cy + 100, cx, cy + 60);
-                        oCtx.quadraticCurveTo(cx + 40, cy + 100, cx + 100, cy + 50);
-                        oCtx.quadraticCurveTo(cx + 40, cy + 60, cx, cy + 50);
-                        oCtx.fill();
+                        oCtx.moveTo(cx, my);
+                        oCtx.bezierCurveTo(cx - (40 * scaleFactor), my - (10 * scaleFactor), cx - (70 * scaleFactor), my + (10 * scaleFactor), cx - (90 * scaleFactor), my);
+                        oCtx.bezierCurveTo(cx - (50 * scaleFactor), my + (35 * scaleFactor), cx, my + (20 * scaleFactor), cx, my + (5 * scaleFactor));
+                        oCtx.bezierCurveTo(cx, my + (20 * scaleFactor), cx + (50 * scaleFactor), my + (35 * scaleFactor), cx + (90 * scaleFactor), my);
+                        oCtx.bezierCurveTo(cx + (70 * scaleFactor), my + (10 * scaleFactor), cx + (40 * scaleFactor), my - (10 * scaleFactor), cx, my);
+                        oCtx.closePath(); oCtx.fill();
                     } else if (prop === 'bowtie') {
                         oCtx.fillStyle = '#9b51e0';
-                        const ty = cy + 160; // Neck level placement
+                        const by = cy + (140 * scaleFactor);
                         oCtx.beginPath();
-                        oCtx.moveTo(cx, ty);
-                        oCtx.lineTo(cx - 70, ty - 40); oCtx.lineTo(cx - 70, ty + 40);
-                        oCtx.lineTo(cx, ty);
-                        oCtx.lineTo(cx + 70, ty - 40); oCtx.lineTo(cx + 70, ty + 40);
+                        oCtx.moveTo(cx, by);
+                        oCtx.lineTo(cx - (55 * scaleFactor), by - (30 * scaleFactor));
+                        oCtx.lineTo(cx - (55 * scaleFactor), by + (30 * scaleFactor));
                         oCtx.closePath(); oCtx.fill();
-                        // Center Knot
+                        oCtx.beginPath();
+                        oCtx.moveTo(cx, by);
+                        oCtx.lineTo(cx + (55 * scaleFactor), by - (30 * scaleFactor));
+                        oCtx.lineTo(cx + (55 * scaleFactor), by + (30 * scaleFactor));
+                        oCtx.closePath(); oCtx.fill();
                         oCtx.fillStyle = '#ffffff';
-                        oCtx.beginPath(); oCtx.arc(cx, ty, 14, 0, Math.PI * 2); oCtx.fill();
+                        oCtx.beginPath(); oCtx.arc(cx, by, 10 * scaleFactor, 0, Math.PI * 2); oCtx.fill();
                     }
                     oCtx.restore();
                 }
             }
-            requestAnimationFrame(() => drawOverlayLoop(video, overlayCanvas, source));
         }
 
         function selectProp(propName, element) {
@@ -488,14 +482,14 @@
             element.classList.add('active');
         }
 
-        // Live syncing pipelines
         socket.on('update-studio-prop', (propName) => { window.remoteProp = propName; });
 
         function connectToRoom() {
             roomId = document.getElementById('room-input').value;
             socket.emit('join-room', roomId);
-            document.getElementById('join-btn').innerText = "Connected Studio ✓";
-            document.getElementById('join-btn').style.background = "#00f3ff";
+            const joinBtn = document.getElementById('join-btn');
+            joinBtn.innerText = "Connected Studio ✓";
+            joinBtn.style.background = "#00f3ff";
         }
 
         socket.on('peer-joined', (peerId) => initPeer(peerId, true));
@@ -521,7 +515,6 @@
         socket.on('start-countdown', async () => {
             actionBtn.disabled = true;
             capturedFrames = [];
-            // Reset image shelf preview deck slots
             for(let s=0; s<4; s++) document.getElementById(`slot-${s}`).innerHTML = s+1;
 
             for (let i = 0; i < 4; i++) {
@@ -543,15 +536,13 @@
             snap.width = 800; snap.height = 320;
             const sCtx = snap.getContext('2d');
 
-            // Draw left frame (You + Active overlay element baked in)
             sCtx.save();
             sCtx.translate(400, 0); sCtx.scale(-1, 1);
             sCtx.drawImage(localVideo, 0, 0, 400, 320);
-            sCtx.translate(400, 0); sCtx.scale(-1, 1); // unmirror overlay canvas drawing
+            sCtx.translate(400, 0); sCtx.scale(-1, 1); 
             sCtx.drawImage(localOverlay, 0, 0, 400, 320);
             sCtx.restore();
 
-            // Draw right frame (Partner + Active incoming overlay canvas)
             if (remoteVideo.srcObject) {
                 sCtx.drawImage(remoteVideo, 400, 0, 400, 320);
                 sCtx.drawImage(remoteOverlay, 400, 0, 400, 320);
@@ -561,10 +552,7 @@
 
             const dataUrl = snap.toDataURL('image/png');
             capturedFrames.push(dataUrl);
-
-            // Dynamically inject captured image into lower filmstrip shelf deck
-            const slot = document.getElementById(`slot-${slotIndex}`);
-            slot.innerHTML = `<img src="${dataUrl}">`;
+            document.getElementById(`slot-${slotIndex}`).innerHTML = `<img src="${dataUrl}">`;
         }
 
         function buildStudioStrip() {
@@ -572,7 +560,6 @@
             canvas.width = w + (p * 2);
             canvas.height = (h * 4) + (p * 5) + 60;
 
-            // Render selected border template styles
             if (activeTemplate === 'midnight') ctx.fillStyle = "#09070f";
             else if (activeTemplate === 'retro') ctx.fillStyle = "#f4ebd0";
             else if (activeTemplate === 'festive') ctx.fillStyle = "#fff0f5";
@@ -586,25 +573,24 @@
                     const rowY = p + (i * (h + p));
                     ctx.drawImage(img, p, rowY, w, h);
 
-                    // Optional template frame graphics
                     if (activeTemplate === 'filmstrip') {
                         ctx.fillStyle = "#ffffff";
                         for(let x = p; x < canvas.width - p; x += 30) {
-                            ctx.fillRect(x, rowY - 16, 14, 10); // Upper sprocket holes
-                            ctx.fillRect(x, rowY + h + 6, 14, 10); // Lower sprocket holes
+                            ctx.fillRect(x, rowY - 16, 14, 10); 
+                            ctx.fillRect(x, rowY + h + 6, 14, 10); 
                         }
                     } else if (activeTemplate === 'festive') {
-                        ctx.font = "24px sans-serif";
-                        ctx.fillText("❤️", p + 20, rowY + 40);
-                        ctx.fillText("❤️", p + w - 45, rowY + h - 20);
+                        ctx.fillStyle = "#ff477e";
+                        ctx.font = "28px Arial";
+                        ctx.fillText("💖", p + 15, rowY + 45);
+                        ctx.fillText("💖", p + w - 50, rowY + h - 20);
                     }
 
                     loadedCount++;
                     if (loadedCount === 4) {
-                        // Stamp layout footer captions
                         ctx.fillStyle = activeTemplate === 'retro' ? '#5c4d3c' : '#ffffff';
                         ctx.font = "bold 20px monospace";
-                        ctx.fillText(`STUDIO STRIP // ROW LAYOUT // DESIGNED 2026`, p + 20, canvas.height - 30);
+                        ctx.fillText(`STUDIO STRIP // TEMPLATE: ${activeTemplate.toUpperCase()} // 2026`, p + 20, canvas.height - 25);
                         
                         document.getElementById('strip-output').style.display = 'block';
                         document.getElementById('strip-output').scrollIntoView({ behavior: 'smooth' });
